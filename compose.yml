@@ -1,0 +1,103 @@
+services:
+  node-exporter:
+    image: prom/node-exporter:v1.10.2
+    container_name: node-exporter
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 64m
+    pids_limit: 64
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.textfile.directory=/textfile
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)
+      - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|tmpfs)$
+    networks:
+      - monitoring
+    pid: host
+    read_only: true
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+      - node_textfile:/textfile:ro
+
+  docker-health-metrics:
+    image: docker:29.3.1-cli-alpine3.23
+    container_name: docker-health-metrics
+    restart: unless-stopped
+    cpus: 0.15
+    mem_limit: 64m
+    pids_limit: 64
+    entrypoint:
+      - /bin/sh
+      - /opt/docker-health/entrypoint.sh
+    environment:
+      DOCKER_TARGETS: ${DOCKER_TARGETS:-naoto-be naoto-fe naoto-web naoto-docs}
+      SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-30}
+    networks:
+      - monitoring
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./docker-health/entrypoint.sh:/opt/docker-health/entrypoint.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - node_textfile:/textfile
+
+  prometheus:
+    image: prom/prometheus:v3.5.1
+    container_name: prometheus
+    restart: unless-stopped
+    cpus: 0.75
+    mem_limit: 384m
+    pids_limit: 256
+    entrypoint:
+      - /bin/sh
+      - /etc/prometheus/entrypoint.sh
+    environment:
+      ALERT_INSTANCE: ${ALERT_INSTANCE:?ALERT_INSTANCE is required}
+    networks:
+      - monitoring
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./prometheus/prometheus.yml.tpl:/etc/prometheus/prometheus.yml.tpl:ro
+      - ./prometheus/entrypoint.sh:/etc/prometheus/entrypoint.sh:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.30.0
+    container_name: alertmanager
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 128m
+    pids_limit: 128
+    entrypoint:
+      - /bin/sh
+      - /etc/alertmanager/entrypoint.sh
+    environment:
+      ALERT_INSTANCE: ${ALERT_INSTANCE:?ALERT_INSTANCE is required}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID is required}
+    networks:
+      - monitoring
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./alertmanager/alertmanager.yml.tpl:/etc/alertmanager/alertmanager.yml.tpl:ro
+      - ./alertmanager/entrypoint.sh:/etc/alertmanager/entrypoint.sh:ro
+      - alertmanager_data:/alertmanager
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  node_textfile:
+
+networks:
+  monitoring:
+    driver: bridge
