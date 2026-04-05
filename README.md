@@ -46,7 +46,7 @@ cp .env.example .env
 - `ALERT_INSTANCE`: VM name shown in alerts
 - `TELEGRAM_BOT_TOKEN`: Telegram bot token
 - `TELEGRAM_CHAT_ID`: destination group, channel, or direct message chat ID
-- `DOCKER_TARGETS`: space-separated list of container names to monitor
+- `CONTAINER_TARGETS`: comma-separated list of container names to monitor
 
 3. Validate the config:
 
@@ -96,7 +96,7 @@ Recommended Telegram alert test:
 
 1. Start the monitoring stack
 2. Stop one application service, for example `naoto-web`
-3. Wait about 2 minutes for the container alert to fire
+3. Wait about 1 minute for the container alert to fire
 4. Start the service again
 5. Confirm that the resolved notification is sent
 

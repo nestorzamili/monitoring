@@ -34,8 +34,8 @@ services:
       - /bin/sh
       - /opt/docker-health/entrypoint.sh
     environment:
-      DOCKER_TARGETS: ${DOCKER_TARGETS:-naoto-be naoto-fe naoto-web naoto-docs}
-      SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-30}
+      CONTAINER_TARGETS: ${CONTAINER_TARGETS:-naoto-be,naoto-fe,naoto-web,naoto-docs}
+      SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-15}
     networks:
       - monitoring
     read_only: true
@@ -83,6 +83,7 @@ services:
       ALERT_INSTANCE: ${ALERT_INSTANCE:?ALERT_INSTANCE is required}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID is required}
+      TZ: ${TZ:-Asia/Jakarta}
     networks:
       - monitoring
     read_only: true

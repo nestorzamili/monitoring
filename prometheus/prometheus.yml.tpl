@@ -1,6 +1,6 @@
 global:
-  scrape_interval: 30s
-  evaluation_interval: 30s
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
     instance: '@@ALERT_INSTANCE@@'
 
@@ -26,7 +26,6 @@ scrape_configs:
       - targets:
           - node-exporter:9100
         labels:
-          service: host
           node_name: '@@ALERT_INSTANCE@@'
     relabel_configs:
       - source_labels: [node_name]

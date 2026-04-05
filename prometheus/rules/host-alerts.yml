@@ -3,48 +3,48 @@ groups:
     rules:
       - alert: NodeExporterDown
         expr: up{job="node"} == 0
-        for: 2m
+        for: 45s
         labels:
           severity: critical
         annotations:
           summary: Node exporter cannot be scraped
-          description: Prometheus could not scrape node exporter on {{ $labels.instance }} for 2 minutes.
+          description: Prometheus could not scrape node exporter on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerHealthCollectorStale
-        expr: time() - docker_health_collector_last_run_seconds > 120
-        for: 2m
+        expr: time() - docker_health_collector_last_run_seconds > 60
+        for: 45s
         labels:
           severity: critical
         annotations:
           summary: Docker health collector is stale
-          description: The Docker health collector on {{ $labels.instance }} has not updated metrics for more than 2 minutes.
+          description: The Docker health collector on {{ $labels.instance }} has not updated metrics for more than 60 seconds.
 
       - alert: DockerContainerMissing
         expr: docker_container_present == 0
-        for: 2m
+        for: 45s
         labels:
           severity: critical
         annotations:
           summary: Target container is missing
-          description: Container {{ $labels.service }} has not been found on {{ $labels.instance }} for 2 minutes.
+          description: Container {{ $labels.service }} has not been found on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerNotRunning
         expr: docker_container_present == 1 and docker_container_running == 0
-        for: 2m
+        for: 45s
         labels:
           severity: critical
         annotations:
           summary: Container is not running
-          description: Container {{ $labels.service }} has not been running on {{ $labels.instance }} for 2 minutes.
+          description: Container {{ $labels.service }} has not been running on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerUnhealthy
         expr: docker_container_present == 1 and docker_container_running == 1 and docker_container_healthy == 0
-        for: 2m
+        for: 45s
         labels:
           severity: critical
         annotations:
           summary: Docker health check failed
-          description: Docker health check for container {{ $labels.service }} has not been healthy on {{ $labels.instance }} for 2 minutes.
+          description: Docker health check for container {{ $labels.service }} has not been healthy on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerRestartingTooMuch
         expr: increase(docker_container_restart_count[15m]) >= 3

@@ -4,8 +4,8 @@ set -eu
 OUT_DIR=/textfile
 TMP_FILE="$OUT_DIR/docker_health.prom.tmp"
 OUT_FILE="$OUT_DIR/docker_health.prom"
-TARGETS="${DOCKER_TARGETS:-naoto-be naoto-fe naoto-web naoto-docs}"
-INTERVAL="${SCRAPE_INTERVAL_SECONDS:-30}"
+TARGETS_RAW="${CONTAINER_TARGETS:-naoto-be,naoto-fe,naoto-web,naoto-docs}"
+INTERVAL="${SCRAPE_INTERVAL_SECONDS:-15}"
 
 write_metrics() {
   now="$(date +%s)"
@@ -56,6 +56,7 @@ write_metrics() {
 }
 
 mkdir -p "$OUT_DIR"
+TARGETS="$(printf '%s' "$TARGETS_RAW" | tr ',' ' ')"
 
 while true; do
   write_metrics
