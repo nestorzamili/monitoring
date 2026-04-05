@@ -16,7 +16,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Docker health collector is stale
+          summary: Docker health collector has stopped updating metrics
           description: The Docker health collector on {{ $labels.instance }} has not updated metrics for more than 60 seconds.
 
       - alert: DockerContainerMissing
@@ -25,7 +25,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Target container is missing
+          summary: Container {{ $labels.service }} is missing
           description: Container {{ $labels.service }} has not been found on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerNotRunning
@@ -34,7 +34,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Container is not running
+          summary: Container {{ $labels.service }} is not running
           description: Container {{ $labels.service }} has not been running on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerUnhealthy
@@ -43,7 +43,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Docker health check failed
+          summary: Container {{ $labels.service }} failed its Docker health check
           description: Docker health check for container {{ $labels.service }} has not been healthy on {{ $labels.instance }} for 45 seconds.
 
       - alert: DockerContainerRestartingTooMuch
@@ -52,62 +52,62 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: Container is restarting too often
+          summary: Container {{ $labels.service }} is restarting too often
           description: Container {{ $labels.service }} restarted at least 3 times within 15 minutes on {{ $labels.instance }}.
 
       - alert: HostHighCPUWarning
         expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{job="node",mode="idle"}[5m])) * 100) > 85
-        for: 10m
+        for: 30s
         labels:
           severity: warning
         annotations:
-          summary: Host CPU usage is high
-          description: CPU usage on {{ $labels.instance }} has been above 85% for 10 minutes.
+          summary: CPU usage has been above 85% for 30 seconds
+          description: CPU usage on {{ $labels.instance }} has been above 85% for 30 seconds.
 
       - alert: HostHighCPUCritical
         expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{job="node",mode="idle"}[5m])) * 100) > 95
-        for: 5m
+        for: 1m
         labels:
           severity: critical
         annotations:
-          summary: Host CPU usage is critically high
-          description: CPU usage on {{ $labels.instance }} has been above 95% for 5 minutes.
+          summary: CPU usage has been above 95% for 1 minute
+          description: CPU usage on {{ $labels.instance }} has been above 95% for 1 minute.
 
       - alert: HostMemoryLowWarning
         expr: (node_memory_MemAvailable_bytes{job="node"} / node_memory_MemTotal_bytes{job="node"}) * 100 < 15
-        for: 10m
+        for: 30s
         labels:
           severity: warning
         annotations:
-          summary: Host memory is low
-          description: Available memory on {{ $labels.instance }} has been below 15% for 10 minutes.
+          summary: Available memory has been below 15% for 30 seconds
+          description: Available memory on {{ $labels.instance }} has been below 15% for 30 seconds.
 
       - alert: HostMemoryLowCritical
         expr: (node_memory_MemAvailable_bytes{job="node"} / node_memory_MemTotal_bytes{job="node"}) * 100 < 8
-        for: 5m
+        for: 1m
         labels:
           severity: critical
         annotations:
-          summary: Host memory is critically low
-          description: Available memory on {{ $labels.instance }} has been below 8% for 5 minutes.
+          summary: Available memory has been below 8% for 1 minute
+          description: Available memory on {{ $labels.instance }} has been below 8% for 1 minute.
 
       - alert: HostLoadHighWarning
         expr: node_load1{job="node"} / count by (instance) (node_cpu_seconds_total{job="node",mode="idle"}) > 1.5
-        for: 10m
+        for: 3m
         labels:
           severity: warning
         annotations:
-          summary: Host load is high
-          description: 1-minute load on {{ $labels.instance }} has been above 1.5x the CPU core count for 10 minutes.
+          summary: 1-minute load has been above 1.5x CPU core count for 3 minutes
+          description: 1-minute load on {{ $labels.instance }} has been above 1.5x the CPU core count for 3 minutes.
 
       - alert: HostLoadHighCritical
         expr: node_load1{job="node"} / count by (instance) (node_cpu_seconds_total{job="node",mode="idle"}) > 2
-        for: 5m
+        for: 2m
         labels:
           severity: critical
         annotations:
-          summary: Host load is critically high
-          description: 1-minute load on {{ $labels.instance }} has been above 2x the CPU core count for 5 minutes.
+          summary: 1-minute load has been above 2x CPU core count for 2 minutes
+          description: 1-minute load on {{ $labels.instance }} has been above 2x the CPU core count for 2 minutes.
 
       - alert: DiskLowSpaceWarning
         expr: |
@@ -118,12 +118,12 @@ groups:
           ) * 100 < 15
           and on (instance, device, mountpoint)
           node_filesystem_readonly{job="node"} == 0
-        for: 15m
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: Disk space is low
-          description: Free disk space on mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been below 15% for 15 minutes.
+          summary: Free disk space on {{ $labels.mountpoint }} has been below 15% for 5 minutes
+          description: Free disk space on mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been below 15% for 5 minutes.
 
       - alert: DiskLowSpaceCritical
         expr: |
@@ -134,23 +134,23 @@ groups:
           ) * 100 < 8
           and on (instance, device, mountpoint)
           node_filesystem_readonly{job="node"} == 0
-        for: 10m
+        for: 3m
         labels:
           severity: critical
         annotations:
-          summary: Disk space is critically low
-          description: Free disk space on mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been below 8% for 10 minutes.
+          summary: Free disk space on {{ $labels.mountpoint }} has been below 8% for 3 minutes
+          description: Free disk space on mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been below 8% for 3 minutes.
 
       - alert: DiskWillFillSoon
         expr: |
           predict_linear(node_filesystem_avail_bytes{job="node",fstype!~"tmpfs|overlay|squashfs|nsfs|ramfs|tracefs"}[6h], 24 * 3600) < 0
           and on (instance, device, mountpoint)
           node_filesystem_readonly{job="node"} == 0
-        for: 30m
+        for: 10m
         labels:
           severity: warning
         annotations:
-          summary: Disk is predicted to fill soon
+          summary: Disk on {{ $labels.mountpoint }} is predicted to fill within 24 hours
           description: Mount {{ $labels.mountpoint }} at {{ $labels.instance }} is predicted to run out of space within 24 hours if the current trend continues.
 
       - alert: InodeLowWarning
@@ -162,21 +162,21 @@ groups:
           ) * 100 < 10
           and on (instance, device, mountpoint)
           node_filesystem_readonly{job="node"} == 0
-        for: 15m
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: Inodes are low
-          description: Free inodes on mount {{ $labels.mountpoint }} at {{ $labels.instance }} have been below 10% for 15 minutes.
+          summary: Free inodes on {{ $labels.mountpoint }} have been below 10% for 5 minutes
+          description: Free inodes on mount {{ $labels.mountpoint }} at {{ $labels.instance }} have been below 10% for 5 minutes.
 
       - alert: FilesystemReadOnly
         expr: node_filesystem_readonly{job="node"} == 1
-        for: 2m
+        for: 30s
         labels:
           severity: critical
         annotations:
-          summary: Filesystem is read-only
-          description: Mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been read-only for 2 minutes.
+          summary: Filesystem {{ $labels.mountpoint }} is read-only
+          description: Mount {{ $labels.mountpoint }} at {{ $labels.instance }} has been read-only for 30 seconds.
 
       - alert: HostSwapHigh
         expr: |
@@ -184,12 +184,12 @@ groups:
             1 - (node_memory_SwapFree_bytes{job="node"} / node_memory_SwapTotal_bytes{job="node"})
           ) * 100 > 50
           and node_memory_SwapTotal_bytes{job="node"} > 0
-        for: 15m
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: Swap usage is high
-          description: Swap usage on {{ $labels.instance }} has been above 50% for 15 minutes.
+          summary: Swap usage has been above 50% for 5 minutes
+          description: Swap usage on {{ $labels.instance }} has been above 50% for 5 minutes.
 
       - alert: HostRebooted
         expr: changes(node_boot_time_seconds{job="node"}[15m]) > 0
@@ -197,5 +197,5 @@ groups:
         labels:
           severity: info
         annotations:
-          summary: Host reboot detected
+          summary: Host reboot detected in the last 15 minutes
           description: Host {{ $labels.instance }} rebooted within the last 15 minutes.
